@@ -1,64 +1,63 @@
 @echo off
 setlocal EnableExtensions
-title Outlook PST Migration SAFE V2
-chcp 65001 >nul
+title Outlook PST Migration SAFE V3
 
 echo ================================================
-echo  БЕЗОПАСНАЯ ВЕРСИЯ V2 - ИСХОДНЫЕ PST НЕ УДАЛЯЕТ
+echo  SAFE V3 - SOURCE PST FILES WILL NOT BE DELETED
 echo ================================================
 echo.
-echo Если это окно видно, BAT-файл запустился нормально.
-echo Для продолжения нажмите любую клавишу.
+echo The BAT file started successfully.
+echo Press any key to continue.
 pause >nul
 
 set "DESTINATION=D:\OutlookArchive"
 if not "%~1"=="" set "DESTINATION=%~1"
-set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV2"
-set "LAUNCHLOG=%TEMP%\OutlookPstMigration-SAFE-V2.log"
+set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV3"
+set "LAUNCHLOG=%TEMP%\OutlookPstMigration-SAFE-V3.log"
 set "RESULT=1"
 
-echo [%date% %time%] Запуск SAFE V2 >"%LAUNCHLOG%"
-echo Папка назначения: %DESTINATION% >>"%LAUNCHLOG%"
+echo [%date% %time%] Start SAFE V3 >"%LAUNCHLOG%"
+echo Destination: %DESTINATION% >>"%LAUNCHLOG%"
 
 fltmc >nul 2>&1
 if errorlevel 1 (
     echo.
-    echo ОШИБКА: нужны права администратора.
-    echo Нажмите правой кнопкой на BAT и выберите «Запуск от имени администратора».
-    echo Нет прав администратора. >>"%LAUNCHLOG%"
-    goto :finish
+    echo ERROR: Administrator rights are required.
+    echo Right-click this BAT file and select Run as administrator.
+    echo Administrator rights are missing. >>"%LAUNCHLOG%"
+    goto finish
 )
 
 if not exist "%~dp01-SystemStage.ps1" (
     echo.
-    echo ОШИБКА: рядом нет файла 1-SystemStage.ps1.
-    echo Полностью распакуйте ZIP, затем запускайте BAT из распакованной папки.
-    echo Не найден 1-SystemStage.ps1. >>"%LAUNCHLOG%"
-    goto :finish
+    echo ERROR: 1-SystemStage.ps1 was not found next to this BAT file.
+    echo Extract the entire ZIP archive before starting.
+    echo 1-SystemStage.ps1 was not found. >>"%LAUNCHLOG%"
+    goto finish
 )
 if not exist "%~dp02-UserStage.ps1" (
     echo.
-    echo ОШИБКА: рядом нет файла 2-UserStage.ps1.
-    echo Полностью распакуйте ZIP, затем запускайте BAT из распакованной папки.
-    echo Не найден 2-UserStage.ps1. >>"%LAUNCHLOG%"
-    goto :finish
+    echo ERROR: 2-UserStage.ps1 was not found next to this BAT file.
+    echo Extract the entire ZIP archive before starting.
+    echo 2-UserStage.ps1 was not found. >>"%LAUNCHLOG%"
+    goto finish
 )
 
 if not exist "%WORKDIR%" mkdir "%WORKDIR%"
 if errorlevel 1 (
-    echo ОШИБКА: не удалось создать рабочую папку.
-    echo Ошибка создания %WORKDIR%. >>"%LAUNCHLOG%"
-    goto :finish
+    echo ERROR: Cannot create the working directory.
+    echo Cannot create %WORKDIR%. >>"%LAUNCHLOG%"
+    goto finish
 )
 
 copy /y "%~dp01-SystemStage.ps1" "%WORKDIR%\1-SystemStage.ps1" >>"%LAUNCHLOG%" 2>&1
-if errorlevel 1 goto :copyerror
+if errorlevel 1 goto copyerror
 copy /y "%~dp02-UserStage.ps1" "%WORKDIR%\2-UserStage.ps1" >>"%LAUNCHLOG%" 2>&1
-if errorlevel 1 goto :copyerror
+if errorlevel 1 goto copyerror
 
 echo.
-echo Идёт поиск и безопасное копирование PST...
-echo Исходные PST удаляться не будут.
+echo Searching and safely copying PST files...
+echo Source PST files will not be deleted.
 echo.
 powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WORKDIR%\1-SystemStage.ps1" -DestinationRoot "%DESTINATION%" >>"%LAUNCHLOG%" 2>&1
 set "RESULT=%ERRORLEVEL%"
@@ -67,20 +66,20 @@ echo.
 type "%LAUNCHLOG%"
 echo.
 if "%RESULT%"=="0" (
-    echo ГОТОВО. Исходные PST сохранены.
+    echo DONE. Source PST files were preserved.
 ) else (
-    echo ОШИБКА. Перенос не завершён. Исходные PST не должны удаляться.
+    echo ERROR. Migration was not completed. Source PST files should be preserved.
 )
-goto :finish
+goto finish
 
 :copyerror
 echo.
-echo ОШИБКА: не удалось скопировать служебные скрипты.
-echo Ошибка копирования файлов. >>"%LAUNCHLOG%"
+echo ERROR: Cannot copy the PowerShell scripts.
+echo Cannot copy the PowerShell scripts. >>"%LAUNCHLOG%"
 
 :finish
 echo.
-echo Журнал запуска: "%LAUNCHLOG%"
-echo Для закрытия окна нажмите любую клавишу.
+echo Launcher log: "%LAUNCHLOG%"
+echo Press any key to close this window.
 pause >nul
 exit /b %RESULT%
