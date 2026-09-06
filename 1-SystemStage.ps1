@@ -6,12 +6,12 @@
 #############################################################################>
 [CmdletBinding()]
 param(
-    [string]$DestinationRoot = 'D:\OutlookArchive',
+    [string]$DestinationRoot = 'C:\OutlookArchive',
     [int]$TimeoutMinutes = 120
 )
 
 $ErrorActionPreference = 'Stop'
-$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV4'
+$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV5'
 $UserScript = Join-Path $Root '2-UserStage.ps1'
 if (-not (Test-Path -LiteralPath $UserScript)) { throw "Не найден $UserScript" }
 
@@ -37,7 +37,7 @@ $UserWork = Join-Path $Root $Sid
 $ResultFile = Join-Path $UserWork 'result.json'
 $LockFile = Join-Path $UserWork 'running.lock'
 $ControllerLockFile = Join-Path $UserWork 'controller.lock'
-$TaskName = "Outlook PST safe migration v4 - $Sid"
+$TaskName = "Outlook PST safe migration v5 - $Sid"
 
 New-Item -Path $Root, $UserWork, $Destination -ItemType Directory -Force | Out-Null
 & icacls.exe $UserWork /grant "${User}:(OI)(CI)M" /T /C | Out-Null
