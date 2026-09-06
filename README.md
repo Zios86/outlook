@@ -9,7 +9,9 @@ Start-Migration.bat — запуск для автоматического ма�
 
 УСТАНОВКА
 Для одного компьютера используйте только Start-Local-SAFE.bat.
-Версия V5 использует BAT в ASCII и PowerShell-файлы в UTF-8 BOM с CRLF.
+Версия V6 использует BAT в ASCII и PowerShell-файлы в UTF-8 BOM с CRLF.
+Перед копированием она проверяет классический Outlook, размер PST и свободное место.
+Во время копирования обновляется процент выполнения в журнале.
 Она сразу показывает контрольное окно и никогда не запускает старые скрипты.
 
 Простой вариант: положите BAT и оба PS1-файла в одну папку и запустите
@@ -70,7 +72,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookP
 - пароль PST невозможно автоматически передать через поддерживаемый Outlook COM API.
 
 ЖУРНАЛЫ
-C:\ProgramData\OutlookPstMigrationSafeV5\<SID>\migration.log
-C:\ProgramData\OutlookPstMigrationSafeV5\<SID>\result.json
+C:\ProgramData\OutlookPstMigrationSafeV6\<SID>\migration.log
+C:\ProgramData\OutlookPstMigrationSafeV6\<SID>\result.json
 
 Перед массовым развёртыванием обязательно выполните пилот на одном тестовом АРМ.
