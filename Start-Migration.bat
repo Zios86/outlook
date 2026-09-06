@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions
 
-set "DESTINATION=D:\OutlookArchive"
+set "DESTINATION=C:\OutlookArchive"
 set "SILENT=0"
 if /i "%~1"=="/silent" (
     set "SILENT=1"
@@ -10,8 +10,8 @@ if /i "%~1"=="/silent" (
 )
 if /i "%~2"=="/silent" set "SILENT=1"
 
-set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV4"
-set "OUTPUT=%TEMP%\OutlookPstMigration-SAFE-V4.log"
+set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV5"
+set "OUTPUT=%TEMP%\OutlookPstMigration-SAFE-V5.log"
 set "RESULT=1"
 
 fltmc >nul 2>&1
