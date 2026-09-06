@@ -9,12 +9,12 @@ Start-Migration.bat — запуск для автоматического ма�
 
 УСТАНОВКА
 Для одного компьютера используйте только Start-Local-SAFE.bat.
-Версия V4 использует BAT в ASCII и PowerShell-файлы в UTF-8 BOM с CRLF.
+Версия V5 использует BAT в ASCII и PowerShell-файлы в UTF-8 BOM с CRLF.
 Она сразу показывает контрольное окно и никогда не запускает старые скрипты.
 
 Простой вариант: положите BAT и оба PS1-файла в одну папку и запустите
 Start-Migration.bat от администратора или через систему управления от SYSTEM.
-По умолчанию архивы переносятся в D:\OutlookArchive.
+По умолчанию архивы переносятся в C:\OutlookArchive.
 
 Другую папку можно передать первым параметром:
 
@@ -38,7 +38,7 @@ Start-Migration.bat "E:\OutlookArchive" /silent
 2. Поместите в неё оба PS1-файла.
 3. Запустите первый этап:
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookPstMigration\1-SystemStage.ps1" -DestinationRoot "D:\OutlookArchive"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookPstMigration\1-SystemStage.ps1" -DestinationRoot "C:\OutlookArchive"
 
 Параметр -TimeoutMinutes задаёт максимальное время ожидания. По умолчанию 120 минут.
 
@@ -70,7 +70,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookP
 - пароль PST невозможно автоматически передать через поддерживаемый Outlook COM API.
 
 ЖУРНАЛЫ
-C:\ProgramData\OutlookPstMigrationSafeV4\<SID>\migration.log
-C:\ProgramData\OutlookPstMigrationSafeV4\<SID>\result.json
+C:\ProgramData\OutlookPstMigrationSafeV5\<SID>\migration.log
+C:\ProgramData\OutlookPstMigrationSafeV5\<SID>\result.json
 
 Перед массовым развёртыванием обязательно выполните пилот на одном тестовом АРМ.
