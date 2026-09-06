@@ -150,19 +150,14 @@ try {
         }
     }
 
-    # Профиль уже переключён. Ошибка удаления исходника теперь только предупреждение.
+    # Безопасный режим: исходные PST не удаляем. После проверки администратор
+    # сможет удалить их отдельно, когда убедится, что новые архивы работают.
     foreach ($Item in $Plan) {
-        try {
-            Remove-Item -LiteralPath $Item.OldPath -Force
-            Write-Log "Удалён исходник: $($Item.OldPath)"
-        } catch {
-            [void]$Warnings.Add("Не удалён исходник $($Item.OldPath): $($_.Exception.Message)")
-            Write-Log "ПРЕДУПРЕЖДЕНИЕ: $($Warnings[$Warnings.Count - 1])"
-        }
+        Write-Log "Исходник сохранён: $($Item.OldPath)"
     }
 
-    Write-Log 'Перенос успешно завершён.'
-    Write-Result 'Success' 'Перенос успешно завершён.' $Plan.Count
+    Write-Log 'Копирование и переподключение завершены. Исходники сохранены.'
+    Write-Result 'Success' 'Копирование завершено. Исходники сохранены.' $Plan.Count
 }
 catch {
     $MainError = $_.Exception.Message
