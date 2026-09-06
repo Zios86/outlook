@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 <#############################################################################
  ЭТАП 2. Автоматически запускается от имени сотрудника.
  Находит его PST, копирует, проверяет, переподключает Outlook и пишет результат.
@@ -8,7 +8,7 @@ param([Parameter(Mandatory)][string]$DestinationRoot)
 
 $ErrorActionPreference = 'Stop'
 $Sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-$Root = Join-Path $env:ProgramData "OutlookPstMigrationSafeV3\$Sid"
+$Root = Join-Path $env:ProgramData "OutlookPstMigrationSafeV4\$Sid"
 $ResultFile = Join-Path $Root 'result.json'
 $LogFile = Join-Path $Root 'migration.log'
 $LockFile = Join-Path $Root 'running.lock'
