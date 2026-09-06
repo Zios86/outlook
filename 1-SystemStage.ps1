@@ -1,4 +1,4 @@
-#requires -Version 5.1
+﻿#requires -Version 5.1
 <#############################################################################
  ЭТАП 1. Запускается от администратора или SYSTEM.
  Определяет сотрудника, создаёт пользовательское задание, ждёт результат,
@@ -11,7 +11,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV3'
+$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV4'
 $UserScript = Join-Path $Root '2-UserStage.ps1'
 if (-not (Test-Path -LiteralPath $UserScript)) { throw "Не найден $UserScript" }
 
@@ -37,7 +37,7 @@ $UserWork = Join-Path $Root $Sid
 $ResultFile = Join-Path $UserWork 'result.json'
 $LockFile = Join-Path $UserWork 'running.lock'
 $ControllerLockFile = Join-Path $UserWork 'controller.lock'
-$TaskName = "Outlook PST safe migration v3 - $Sid"
+$TaskName = "Outlook PST safe migration v4 - $Sid"
 
 New-Item -Path $Root, $UserWork, $Destination -ItemType Directory -Force | Out-Null
 & icacls.exe $UserWork /grant "${User}:(OI)(CI)M" /T /C | Out-Null
