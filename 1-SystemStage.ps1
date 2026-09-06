@@ -11,7 +11,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV5'
+$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV6'
 $UserScript = Join-Path $Root '2-UserStage.ps1'
 if (-not (Test-Path -LiteralPath $UserScript)) { throw "Не найден $UserScript" }
 
@@ -37,7 +37,14 @@ $UserWork = Join-Path $Root $Sid
 $ResultFile = Join-Path $UserWork 'result.json'
 $LockFile = Join-Path $UserWork 'running.lock'
 $ControllerLockFile = Join-Path $UserWork 'controller.lock'
-$TaskName = "Outlook PST safe migration v5 - $Sid"
+$TaskName = "Outlook PST safe migration v6 - $Sid"
+
+# Предварительная проверка прав. Планировщик задач и ACL требуют администратора/SYSTEM.
+$CurrentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
+$PrincipalCheck = New-Object Security.Principal.WindowsPrincipal($CurrentIdentity)
+if (-not $PrincipalCheck.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
+    throw 'Для запуска требуются права администратора или SYSTEM.'
+}
 
 New-Item -Path $Root, $UserWork, $Destination -ItemType Directory -Force | Out-Null
 & icacls.exe $UserWork /grant "${User}:(OI)(CI)M" /T /C | Out-Null
@@ -66,6 +73,7 @@ try {
     $Settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes $TimeoutMinutes)
 
     $Result = $null
+    $LastProgressMessage = $null
     Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
         -Principal $Principal -Settings $Settings -Force | Out-Null
     Start-ScheduledTask -TaskName $TaskName
@@ -76,6 +84,10 @@ try {
         Start-Sleep -Seconds 2
         if (Test-Path -LiteralPath $ResultFile) {
             try { $Result = Get-Content $ResultFile -Raw | ConvertFrom-Json } catch { $Result = $null }
+            if ($Result -and $Result.Message -and $Result.Message -ne $LastProgressMessage) {
+                Write-Output $Result.Message
+                $LastProgressMessage = $Result.Message
+            }
             if ($Result -and $Result.Status -in @('Success', 'Failed')) { break }
         }
     } while ((Get-Date) -lt $Deadline)
