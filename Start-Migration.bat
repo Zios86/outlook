@@ -10,13 +10,15 @@ if /i "%~1"=="/silent" (
 )
 if /i "%~2"=="/silent" set "SILENT=1"
 
-set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV6"
-set "OUTPUT=%TEMP%\OutlookPstMigration-SAFE-V6.log"
+set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV7"
+set "OUTPUT=%TEMP%\OutlookPstMigration-SAFE-V7.log"
 set "RESULT=1"
 
 fltmc >nul 2>&1
 if errorlevel 1 goto finish
 if not exist "%WORKDIR%" mkdir "%WORKDIR%"
+if errorlevel 1 goto finish
+powershell.exe -NoLogo -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "%~dp0Test-Package.ps1" >nul 2>&1
 if errorlevel 1 goto finish
 copy /y "%~dp01-SystemStage.ps1" "%WORKDIR%\1-SystemStage.ps1" >nul
 if errorlevel 1 goto finish

@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableExtensions
-title Outlook PST Migration SAFE V6
+title Outlook PST Migration SAFE V7
 
 echo ================================================
-echo  SAFE V6 - SOURCE PST FILES WILL NOT BE DELETED
+echo  SAFE V7 - SOURCE PST FILES WILL NOT BE DELETED
 echo ================================================
 echo.
 echo The BAT file started successfully.
@@ -12,11 +12,11 @@ pause >nul
 
 set "DESTINATION=C:\OutlookArchive"
 if not "%~1"=="" set "DESTINATION=%~1"
-set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV6"
-set "LAUNCHLOG=%TEMP%\OutlookPstMigration-SAFE-V6.log"
+set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV7"
+set "LAUNCHLOG=%TEMP%\OutlookPstMigration-SAFE-V7.log"
 set "RESULT=1"
 
-echo [%date% %time%] Start SAFE V6 >"%LAUNCHLOG%"
+echo [%date% %time%] Start SAFE V7 >"%LAUNCHLOG%"
 echo Destination: %DESTINATION% >>"%LAUNCHLOG%"
 
 fltmc >nul 2>&1
@@ -42,6 +42,16 @@ if not exist "%~dp02-UserStage.ps1" (
     echo 2-UserStage.ps1 was not found. >>"%LAUNCHLOG%"
     goto finish
 )
+if not exist "%~dp0Test-Package.ps1" (
+    echo ERROR: Test-Package.ps1 was not found.
+    goto finish
+)
+
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%~dp0Test-Package.ps1"
+if errorlevel 1 (
+    echo ERROR: Package self-test failed. Migration was not started.
+    goto finish
+)
 
 if not exist "%WORKDIR%" mkdir "%WORKDIR%"
 if errorlevel 1 (
@@ -59,7 +69,7 @@ echo.
 echo Searching and safely copying PST files...
 echo Source PST files will not be deleted.
 echo.
-powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WORKDIR%\1-SystemStage.ps1" -DestinationRoot "%DESTINATION%" >>"%LAUNCHLOG%" 2>&1
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%WORKDIR%\1-SystemStage.ps1" -DestinationRoot "%DESTINATION%"
 set "RESULT=%ERRORLEVEL%"
 
 echo.

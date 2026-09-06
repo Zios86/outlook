@@ -6,12 +6,15 @@ Start-Migration.bat — запуск для автоматического ма�
 1-SystemStage.ps1 — запускается от администратора или SYSTEM.
 2-UserStage.ps1   — автоматически запускается в профиле сотрудника.
 Пояснительная записка — описание назначения и мер безопасности.
+Test-Package.ps1 — автоматическая проверка синтаксиса и безопасности комплекта.
 
 УСТАНОВКА
 Для одного компьютера используйте только Start-Local-SAFE.bat.
-Версия V6 использует BAT в ASCII и PowerShell-файлы в UTF-8 BOM с CRLF.
-Перед копированием она проверяет классический Outlook, размер PST и свободное место.
-Во время копирования обновляется процент выполнения в журнале.
+Версия V7 использует BAT в ASCII и PowerShell-файлы в UTF-8 BOM с CRLF.
+До закрытия Outlook она проверяет классический Outlook, размер PST и свободное место.
+Во время копирования процент выполнения выводится в окно и журнал.
+Проверенные копии сохраняются даже при ошибке подключения Outlook.
+Итоговое соответствие старых и новых путей записывается в manifest.csv.
 Она сразу показывает контрольное окно и никогда не запускает старые скрипты.
 
 Простой вариант: положите BAT и оба PS1-файла в одну папку и запустите
@@ -36,11 +39,11 @@ Start-Migration.bat /silent
 Start-Migration.bat "E:\OutlookArchive" /silent
 
 Ручной вариант:
-1. Создайте папку C:\ProgramData\OutlookPstMigration.
-2. Поместите в неё оба PS1-файла.
+1. Создайте папку C:\ProgramData\OutlookPstMigrationSafeV7.
+2. Поместите в неё три PS1-файла.
 3. Запустите первый этап:
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookPstMigration\1-SystemStage.ps1" -DestinationRoot "C:\OutlookArchive"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookPstMigrationSafeV7\1-SystemStage.ps1" -DestinationRoot "C:\OutlookArchive"
 
 Параметр -TimeoutMinutes задаёт максимальное время ожидания. По умолчанию 120 минут.
 
@@ -72,7 +75,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookP
 - пароль PST невозможно автоматически передать через поддерживаемый Outlook COM API.
 
 ЖУРНАЛЫ
-C:\ProgramData\OutlookPstMigrationSafeV6\<SID>\migration.log
-C:\ProgramData\OutlookPstMigrationSafeV6\<SID>\result.json
+C:\ProgramData\OutlookPstMigrationSafeV7\<SID>\migration.log
+C:\ProgramData\OutlookPstMigrationSafeV7\<SID>\result.json
+C:\ProgramData\OutlookPstMigrationSafeV7\<SID>\manifest.csv
 
 Перед массовым развёртыванием обязательно выполните пилот на одном тестовом АРМ.

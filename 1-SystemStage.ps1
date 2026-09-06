@@ -11,18 +11,20 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV6'
+$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV7'
 $UserScript = Join-Path $Root '2-UserStage.ps1'
 if (-not (Test-Path -LiteralPath $UserScript)) { throw "Не найден $UserScript" }
 
-# Определяем владельца интерактивной оболочки Windows.
-$Users = @(Get-CimInstance Win32_Process -Filter "Name='explorer.exe'" | ForEach-Object {
-    $Owner = Invoke-CimMethod -InputObject $_ -MethodName GetOwner
-    if ($Owner.ReturnValue -eq 0 -and $Owner.User) { "$($Owner.Domain)\$($Owner.User)" }
-} | Sort-Object -Unique)
-if ($Users.Count -eq 0) { throw 'Вошедший пользователь не найден.' }
-if ($Users.Count -gt 1) { throw "Найдено несколько пользователей: $($Users -join ', ')" }
-$User = $Users[0]
+# Сначала берём пользователя активной консоли. Explorer используется только как резерв.
+$User = (Get-CimInstance Win32_ComputerSystem).UserName
+if (-not $User) {
+    $Users = @(Get-CimInstance Win32_Process -Filter "Name='explorer.exe'" | ForEach-Object {
+        $Owner = Invoke-CimMethod -InputObject $_ -MethodName GetOwner
+        if ($Owner.ReturnValue -eq 0 -and $Owner.User) { "$($Owner.Domain)\$($Owner.User)" }
+    } | Sort-Object -Unique)
+    if ($Users.Count -eq 1) { $User = $Users[0] }
+}
+if (-not $User) { throw 'Активный пользователь не найден.' }
 
 # Получаем SID и реальный путь профиля пользователя.
 $Sid = ([Security.Principal.NTAccount]$User).Translate([Security.Principal.SecurityIdentifier]).Value
@@ -32,12 +34,13 @@ if (-not $Profile) { throw "Профиль $User не найден." }
 # Проверяем место назначения.
 $Drive = Split-Path $DestinationRoot -Qualifier
 if ($Drive -and -not (Test-Path -LiteralPath $Drive)) { throw "Диск $Drive отсутствует." }
-$Destination = Join-Path $DestinationRoot (Split-Path $Profile.LocalPath -Leaf)
+$UserFolder = $User -replace '[\\/:*?"<>|]', '_'
+$Destination = Join-Path $DestinationRoot $UserFolder
 $UserWork = Join-Path $Root $Sid
 $ResultFile = Join-Path $UserWork 'result.json'
 $LockFile = Join-Path $UserWork 'running.lock'
 $ControllerLockFile = Join-Path $UserWork 'controller.lock'
-$TaskName = "Outlook PST safe migration v6 - $Sid"
+$TaskName = "Outlook PST safe migration v7 - $Sid"
 
 # Предварительная проверка прав. Планировщик задач и ACL требуют администратора/SYSTEM.
 $CurrentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -54,12 +57,8 @@ if ($LASTEXITCODE -ne 0) { throw "Не удалось выдать права н
 
 # Атомарно блокируем одновременный запуск двух системных этапов.
 $ControllerLock = $null
-try { $ControllerLock = [IO.File]::Open($ControllerLockFile, 'CreateNew', 'Write', 'None') }
+try { $ControllerLock = [IO.File]::Open($ControllerLockFile, 'OpenOrCreate', 'ReadWrite', 'None') }
 catch { throw 'Другой экземпляр переноса для этого пользователя уже запущен.' }
-if (Test-Path -LiteralPath $LockFile) {
-    $ControllerLock.Dispose(); Remove-Item $ControllerLockFile -Force -ErrorAction SilentlyContinue
-    throw 'Пользовательский этап переноса уже выполняется.'
-}
 
 try {
     Remove-Item -LiteralPath $ResultFile -Force -ErrorAction SilentlyContinue
@@ -95,8 +94,6 @@ try {
     if (-not $Result -or $Result.Status -notin @('Success', 'Failed')) {
         Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
         Start-Sleep -Seconds 3
-        Get-Process OUTLOOK -ErrorAction SilentlyContinue | Stop-Process -Force
-        Remove-Item -LiteralPath $LockFile -Force -ErrorAction SilentlyContinue
         throw "Не получен результат за $TimeoutMinutes мин. Возможен PST с паролем. Исходники не удалены."
     }
     if ($Result.Status -eq 'Failed') { throw "$($Result.Message). Журнал: $($Result.LogFile)" }
