@@ -49,6 +49,17 @@ if ($UserScript -match 'Remove-Item\s+-LiteralPath\s+\$Item\.OldPath') {
     $Failed = $true
 }
 
+$RuntimeScripts = @('1-SystemStage.ps1', '2-UserStage.ps1')
+$AllScripts = Get-Content -LiteralPath ($RuntimeScripts | ForEach-Object { Join-Path $PackagePath $_ }) -Raw
+if ($AllScripts -match 'Stop-Process[^\r\n]*OUTLOOK|Get-Process[^\r\n]*OUTLOOK[^\r\n]*\|[^\r\n]*Stop-Process') {
+    Write-Error 'Forced Outlook termination command detected.' -ErrorAction Continue
+    $Failed = $true
+}
+if ($AllScripts -match 'OutlookPstMigrationSafeV[0-6]') {
+    Write-Error 'Reference to an obsolete work directory detected.' -ErrorAction Continue
+    $Failed = $true
+}
+
 if ($Failed) { exit 1 }
 Write-Output 'PACKAGE_TEST=SUCCESS'
 exit 0
