@@ -44,7 +44,7 @@ foreach ($Name in $BatchFiles) {
 }
 
 $UserScript = Get-Content -LiteralPath (Join-Path $PackagePath '2-UserStage.ps1') -Raw
-if ($UserScript -match 'Remove-Item\s+-LiteralPath\s+\$Item\.OldPath') {
+if ($UserScript -match '(Remove-Item|Move-Item|\[IO\.File\]::Delete)[^\r\n]*\$Item\.OldPath') {
     Write-Error 'Unsafe source PST deletion command detected.' -ErrorAction Continue
     $Failed = $true
 }
@@ -55,8 +55,29 @@ if ($AllScripts -match 'Stop-Process[^\r\n]*OUTLOOK|Get-Process[^\r\n]*OUTLOOK[^
     Write-Error 'Forced Outlook termination command detected.' -ErrorAction Continue
     $Failed = $true
 }
-if ($AllScripts -match 'OutlookPstMigrationSafeV[0-6]') {
+if ($AllScripts -match 'OutlookPstMigrationSafeV[0-7]') {
     Write-Error 'Reference to an obsolete work directory detected.' -ErrorAction Continue
+    $Failed = $true
+}
+
+$RequiredV8Markers = @(
+    "StateFile = Join-Path `$Root 'state.json'",
+    "Save-State 'Planned'",
+    "Save-State 'Verified'",
+    "Save-State 'Completed'",
+    'TransformFinalBlock',
+    'Flush($true)'
+)
+foreach ($Marker in $RequiredV8Markers) {
+    if ($UserScript.IndexOf($Marker, [StringComparison]::Ordinal) -lt 0) {
+        Write-Error "Required SAFE V8 marker is missing: $Marker" -ErrorAction Continue
+        $Failed = $true
+    }
+}
+
+$SystemScript = Get-Content -LiteralPath (Join-Path $PackagePath '1-SystemStage.ps1') -Raw
+if ($SystemScript -match 'New-ScheduledTaskTrigger\s+-AtLogOn') {
+    Write-Error 'Persistent logon trigger detected.' -ErrorAction Continue
     $Failed = $true
 }
 

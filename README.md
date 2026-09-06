@@ -10,11 +10,15 @@ Test-Package.ps1 — автоматическая проверка синтак�
 
 УСТАНОВКА
 Для одного компьютера используйте только Start-Local-SAFE.bat.
-Версия V7 использует BAT в ASCII и PowerShell-файлы в UTF-8 BOM с CRLF.
+Версия V8 использует BAT в ASCII и PowerShell-файлы в UTF-8 BOM с CRLF.
 До закрытия Outlook она проверяет классический Outlook, размер PST и свободное место.
 Во время копирования процент выполнения выводится в окно и журнал.
 Проверенные копии сохраняются даже при ошибке подключения Outlook.
 Итоговое соответствие старых и новых путей записывается в manifest.csv.
+Состояние каждого PST записывается в state.json, поэтому повторный запуск
+может продолжить работу после прерывания или сбоя.
+SHA-256 исходника считается одновременно с копированием, а записанная копия
+читается повторно и независимо проверяется.
 Она сразу показывает контрольное окно и никогда не запускает старые скрипты.
 
 Простой вариант: положите BAT и три PS1-файла в одну папку и запустите
@@ -39,11 +43,11 @@ Start-Migration.bat /silent
 Start-Migration.bat "E:\OutlookArchive" /silent
 
 Ручной вариант:
-1. Создайте папку C:\ProgramData\OutlookPstMigrationSafeV7.
+1. Создайте папку C:\ProgramData\OutlookPstMigrationSafeV8.
 2. Поместите в неё три PS1-файла.
 3. Запустите первый этап:
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookPstMigrationSafeV7\1-SystemStage.ps1" -DestinationRoot "C:\OutlookArchive"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookPstMigrationSafeV8\1-SystemStage.ps1" -DestinationRoot "C:\OutlookArchive"
 
 Параметр -TimeoutMinutes задаёт максимальное время ожидания. По умолчанию 120 минут.
 
@@ -54,6 +58,8 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookP
 - дополнительно ищутся неподключённые PST внутри профиля пользователя;
 - файлы копируются под постоянными уникальными именами;
 - каждая копия проверяется по SHA-256;
+- после каждого важного этапа атомарно сохраняется state.json;
+- временные ошибки копирования повторяются до трёх раз;
 - подключённые архивы переподключаются в классическом Outlook;
 - исходные PST сохраняются и автоматически не удаляются;
 - создаётся журнал migration.log и файл результата result.json;
@@ -62,6 +68,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookP
 ЗАЩИТА
 - одновременный повторный запуск блокируется;
 - повторный последовательный запуск не создаёт дубликаты;
+- прерванная операция восстанавливается по state.json;
 - при ошибке удаляются только незавершённые файлы .partial; проверенные копии сохраняются;
 - при ошибке подключения выполняется откат профиля Outlook;
 - исходники сохраняются даже после подключения новых архивов;
@@ -75,8 +82,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookP
 - пароль PST невозможно автоматически передать через поддерживаемый Outlook COM API.
 
 ЖУРНАЛЫ
-C:\ProgramData\OutlookPstMigrationSafeV7\<SID>\migration.log
-C:\ProgramData\OutlookPstMigrationSafeV7\<SID>\result.json
-C:\ProgramData\OutlookPstMigrationSafeV7\<SID>\manifest.csv
+C:\ProgramData\OutlookPstMigrationSafeV8\<SID>\migration.log
+C:\ProgramData\OutlookPstMigrationSafeV8\<SID>\result.json
+C:\ProgramData\OutlookPstMigrationSafeV8\<SID>\state.json
+C:\ProgramData\OutlookPstMigrationSafeV8\<SID>\manifest.csv
 
 Перед массовым развёртыванием обязательно выполните пилот на одном тестовом АРМ.

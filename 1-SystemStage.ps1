@@ -1,6 +1,6 @@
 ﻿#requires -Version 5.1
 <#############################################################################
- ЭТАП 1. Запускается от администратора или SYSTEM.
+ SAFE V8 — системный этап. Запускается от администратора или SYSTEM.
  Определяет сотрудника, создаёт пользовательское задание, ждёт результат,
  записывает итог и удаляет задание из Планировщика.
 #############################################################################>
@@ -11,7 +11,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV7'
+$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV8'
 $UserScript = Join-Path $Root '2-UserStage.ps1'
 if (-not (Test-Path -LiteralPath $UserScript)) { throw "Не найден $UserScript" }
 
@@ -40,7 +40,7 @@ $UserWork = Join-Path $Root $Sid
 $ResultFile = Join-Path $UserWork 'result.json'
 $LockFile = Join-Path $UserWork 'running.lock'
 $ControllerLockFile = Join-Path $UserWork 'controller.lock'
-$TaskName = "Outlook PST safe migration v7 - $Sid"
+$TaskName = "Outlook PST safe migration v8 - $Sid"
 
 # Предварительная проверка прав. Планировщик задач и ACL требуют администратора/SYSTEM.
 $CurrentIdentity = [Security.Principal.WindowsIdentity]::GetCurrent()
@@ -67,13 +67,14 @@ try {
     $Arguments = "-NoProfile -ExecutionPolicy Bypass -File `"$UserScript`" " +
                  "-DestinationRoot `"$DestinationRoot`""
     $Action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument $Arguments
-    $Trigger = New-ScheduledTaskTrigger -AtLogOn -User $User
     $Principal = New-ScheduledTaskPrincipal -UserId $User -LogonType Interactive -RunLevel Limited
     $Settings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes $TimeoutMinutes)
 
     $Result = $null
     $LastProgressMessage = $null
-    Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger `
+    # Триггер входа не создаётся: задача запускается только этой программой и
+    # не сможет неожиданно повториться при следующем входе пользователя.
+    Register-ScheduledTask -TaskName $TaskName -Action $Action `
         -Principal $Principal -Settings $Settings -Force | Out-Null
     Start-ScheduledTask -TaskName $TaskName
 
@@ -96,9 +97,13 @@ try {
         Start-Sleep -Seconds 3
         throw "Не получен результат за $TimeoutMinutes мин. Возможен PST с паролем. Исходники не удалены."
     }
-    if ($Result.Status -eq 'Failed') { throw "$($Result.Message). Журнал: $($Result.LogFile)" }
+    if ($Result.Status -eq 'Failed') {
+        throw "$($Result.Message). Состояние: $($Result.StateFile). Журнал: $($Result.LogFile)"
+    }
 
     Write-Output "Успешно обработано PST: $($Result.Count). Исходники сохранены. Журнал: $($Result.LogFile)"
+    if ($Result.StateFile) { Write-Output "Состояние: $($Result.StateFile)" }
+    if ($Result.ManifestFile) { Write-Output "Манифест: $($Result.ManifestFile)" }
     # Машиночитаемая строка используется BAT-файлом для понятного итогового сообщения.
     Write-Output "PST_RESULT_COUNT=$($Result.Count)"
     if ($Result.Warnings) { Write-Warning ($Result.Warnings -join '; ') }

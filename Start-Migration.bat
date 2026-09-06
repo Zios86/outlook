@@ -10,8 +10,8 @@ if /i "%~1"=="/silent" (
 )
 if /i "%~2"=="/silent" set "SILENT=1"
 
-set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV7"
-set "OUTPUT=%TEMP%\OutlookPstMigration-SAFE-V7.log"
+set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV8"
+set "OUTPUT=%TEMP%\OutlookPstMigration-SAFE-V8.log"
 set "RESULT=1"
 
 fltmc >nul 2>&1

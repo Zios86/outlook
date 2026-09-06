@@ -1,0 +1,29 @@
+name: Validate SAFE V8
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '*.ps1'
+      - '*.bat'
+      - 'Outlook-PST-Migration-SAFE-V8.zip'
+      - '.github/workflows/validate-safe-v8.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate repository scripts
+        shell: powershell
+        run: |
+          & .\Test-Package.ps1 -PackagePath $PWD
+          if ($LASTEXITCODE -ne 0) { throw "Repository self-test failed: $LASTEXITCODE" }
+      - name: Validate release archive
+        shell: powershell
+        run: |
+          $target = Join-Path $env:RUNNER_TEMP 'safe-v8'
+          Expand-Archive -LiteralPath '.\Outlook-PST-Migration-SAFE-V8.zip' -DestinationPath $target -Force
+          & (Join-Path $target 'Test-Package.ps1') -PackagePath $target
+          if ($LASTEXITCODE -ne 0) { throw "Archive self-test failed: $LASTEXITCODE" }
