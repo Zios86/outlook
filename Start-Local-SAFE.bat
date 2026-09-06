@@ -1,9 +1,9 @@
 @echo off
 setlocal EnableExtensions
-title Outlook PST Migration SAFE V5
+title Outlook PST Migration SAFE V6
 
 echo ================================================
-echo  SAFE V5 - SOURCE PST FILES WILL NOT BE DELETED
+echo  SAFE V6 - SOURCE PST FILES WILL NOT BE DELETED
 echo ================================================
 echo.
 echo The BAT file started successfully.
@@ -12,11 +12,11 @@ pause >nul
 
 set "DESTINATION=C:\OutlookArchive"
 if not "%~1"=="" set "DESTINATION=%~1"
-set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV5"
-set "LAUNCHLOG=%TEMP%\OutlookPstMigration-SAFE-V5.log"
+set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV6"
+set "LAUNCHLOG=%TEMP%\OutlookPstMigration-SAFE-V6.log"
 set "RESULT=1"
 
-echo [%date% %time%] Start SAFE V5 >"%LAUNCHLOG%"
+echo [%date% %time%] Start SAFE V6 >"%LAUNCHLOG%"
 echo Destination: %DESTINATION% >>"%LAUNCHLOG%"
 
 fltmc >nul 2>&1
