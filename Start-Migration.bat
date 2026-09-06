@@ -23,7 +23,7 @@ if errorlevel 1 (
 )
 
 rem Копируем скрипты в постоянную рабочую папку.
-set "WORKDIR=%ProgramData%\OutlookPstMigration"
+set "WORKDIR=%ProgramData%\OutlookPstMigrationSafeV2"
 if not exist "%WORKDIR%" mkdir "%WORKDIR%"
 if errorlevel 1 (
     echo ОШИБКА: не удалось создать "%WORKDIR%".
@@ -61,7 +61,7 @@ echo.
 
 if not "%RESULT%"=="0" (
     echo ОШИБКА: перенос не выполнен. Код ошибки: %RESULT%.
-    echo Подробный журнал находится в C:\ProgramData\OutlookPstMigration.
+    echo Подробный журнал находится в C:\ProgramData\OutlookPstMigrationSafeV2.
 ) else (
     findstr /c:"PST_RESULT_COUNT=0" "%OUTPUT%" >nul
     if errorlevel 1 (
