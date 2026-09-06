@@ -89,7 +89,7 @@ try {
     }
     if ($Result.Status -eq 'Failed') { throw "$($Result.Message). Журнал: $($Result.LogFile)" }
 
-    Write-Output "Успешно перенесено PST: $($Result.Count). Журнал: $($Result.LogFile)"
+    Write-Output "Успешно обработано PST: $($Result.Count). Исходники сохранены. Журнал: $($Result.LogFile)"
     # Машиночитаемая строка используется BAT-файлом для понятного итогового сообщения.
     Write-Output "PST_RESULT_COUNT=$($Result.Count)"
     if ($Result.Warnings) { Write-Warning ($Result.Warnings -join '; ') }
