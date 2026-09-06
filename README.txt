@@ -15,6 +15,19 @@ Start-Migration.bat от администратора или через сист
 
 Start-Migration.bat "E:\OutlookArchive"
 
+После завершения BAT покажет одно из сообщений:
+- PST найдены и успешно перенесены;
+- PST не найдены, перенос не требуется;
+- перенос не выполнен из-за ошибки.
+
+Для массового запуска без ожидания нажатия клавиши используйте:
+
+Start-Migration.bat /silent
+
+или с другой папкой назначения:
+
+Start-Migration.bat "E:\OutlookArchive" /silent
+
 Ручной вариант:
 1. Создайте папку C:\ProgramData\OutlookPstMigration.
 2. Поместите в неё оба PS1-файла.
