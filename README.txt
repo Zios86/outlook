@@ -1,12 +1,17 @@
 МАССОВЫЙ ПЕРЕНОС PST OUTLOOK
 
 СОСТАВ
-Start-Migration.bat — простой запуск всего процесса от администратора или SYSTEM.
+Start-Local-SAFE.bat — рекомендуемый безопасный запуск на одном компьютере.
+Start-Migration.bat — запуск для автоматического массового развёртывания.
 1-SystemStage.ps1 — запускается от администратора или SYSTEM.
 2-UserStage.ps1   — автоматически запускается в профиле сотрудника.
 Пояснительная записка — описание назначения и мер безопасности.
 
 УСТАНОВКА
+Для одного компьютера используйте только Start-Local-SAFE.bat.
+Он сразу показывает контрольное окно и никогда не запускает старые скрипты
+из C:\ProgramData\OutlookPstMigration.
+
 Простой вариант: положите BAT и оба PS1-файла в одну папку и запустите
 Start-Migration.bat от администратора или через систему управления от SYSTEM.
 По умолчанию архивы переносятся в D:\OutlookArchive.
@@ -65,7 +70,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File "C:\ProgramData\OutlookP
 - пароль PST невозможно автоматически передать через поддерживаемый Outlook COM API.
 
 ЖУРНАЛЫ
-C:\ProgramData\OutlookPstMigration\<SID>\migration.log
-C:\ProgramData\OutlookPstMigration\<SID>\result.json
+C:\ProgramData\OutlookPstMigrationSafeV2\<SID>\migration.log
+C:\ProgramData\OutlookPstMigrationSafeV2\<SID>\result.json
 
 Перед массовым развёртыванием обязательно выполните пилот на одном тестовом АРМ.
