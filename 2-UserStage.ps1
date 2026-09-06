@@ -8,7 +8,7 @@ param([Parameter(Mandatory)][string]$DestinationRoot)
 
 $ErrorActionPreference = 'Stop'
 $Sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-$Root = Join-Path $env:ProgramData "OutlookPstMigrationSafeV2\$Sid"
+$Root = Join-Path $env:ProgramData "OutlookPstMigrationSafeV3\$Sid"
 $ResultFile = Join-Path $Root 'result.json'
 $LogFile = Join-Path $Root 'migration.log'
 $LockFile = Join-Path $Root 'running.lock'
