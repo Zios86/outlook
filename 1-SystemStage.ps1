@@ -11,7 +11,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$Root = Join-Path $env:ProgramData 'OutlookPstMigration'
+$Root = Join-Path $env:ProgramData 'OutlookPstMigrationSafeV2'
 $UserScript = Join-Path $Root '2-UserStage.ps1'
 if (-not (Test-Path -LiteralPath $UserScript)) { throw "Не найден $UserScript" }
 
@@ -37,7 +37,7 @@ $UserWork = Join-Path $Root $Sid
 $ResultFile = Join-Path $UserWork 'result.json'
 $LockFile = Join-Path $UserWork 'running.lock'
 $ControllerLockFile = Join-Path $UserWork 'controller.lock'
-$TaskName = "Outlook PST migration - $Sid"
+$TaskName = "Outlook PST safe migration v2 - $Sid"
 
 New-Item -Path $Root, $UserWork, $Destination -ItemType Directory -Force | Out-Null
 & icacls.exe $UserWork /grant "${User}:(OI)(CI)M" /T /C | Out-Null
