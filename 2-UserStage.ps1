@@ -8,7 +8,7 @@ param([Parameter(Mandatory)][string]$DestinationRoot)
 
 $ErrorActionPreference = 'Stop'
 $Sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
-$Root = Join-Path $env:ProgramData "OutlookPstMigrationSafeV5\$Sid"
+$Root = Join-Path $env:ProgramData "OutlookPstMigrationSafeV6\$Sid"
 $ResultFile = Join-Path $Root 'result.json'
 $LogFile = Join-Path $Root 'migration.log'
 $LockFile = Join-Path $Root 'running.lock'
@@ -26,11 +26,46 @@ function Write-Log([string]$Text) {
     "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') | $Text" | Add-Content -LiteralPath $LogFile -Encoding UTF8
 }
 
-function Write-Result([string]$Status, [string]$Message, [int]$Count = 0) {
+function Write-Result(
+    [string]$Status,
+    [string]$Message,
+    [int]$Count = 0,
+    [long]$ProcessedBytes = 0,
+    [long]$TotalBytes = 0
+) {
     [pscustomobject]@{
-        Status = $Status; Message = $Message; Count = $Count
+        Version = 6; Status = $Status; Message = $Message; Count = $Count
+        ProcessedBytes = $ProcessedBytes; TotalBytes = $TotalBytes
         Warnings = @($Warnings); LogFile = $LogFile
     } | ConvertTo-Json -Depth 3 | Set-Content -LiteralPath $ResultFile -Encoding UTF8
+}
+
+function Copy-PstFile([string]$Source, [string]$Target, [long]$TotalBytes, [ref]$OverallBytes) {
+    $Buffer = New-Object byte[] (8MB)
+    $InputStream = $null
+    $OutputStream = $null
+    $LastReport = [datetime]::MinValue
+    try {
+        $InputStream = [IO.File]::Open($Source, 'Open', 'Read', 'Read')
+        $OutputStream = [IO.File]::Open($Target, 'CreateNew', 'Write', 'None')
+        while (($Read = $InputStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+            $OutputStream.Write($Buffer, 0, $Read)
+            $OverallBytes.Value += $Read
+            if (((Get-Date) - $LastReport).TotalSeconds -ge 5) {
+                $Percent = if ($TotalBytes -gt 0) { [math]::Min(100, [math]::Floor(100 * $OverallBytes.Value / $TotalBytes)) } else { 100 }
+                $Message = "Копирование PST: $Percent%"
+                Write-Log $Message
+                Write-Result 'Running' $Message 0 $OverallBytes.Value $TotalBytes
+                $LastReport = Get-Date
+            }
+        }
+        $OutputStream.Flush()
+    }
+    finally {
+        if ($OutputStream) { $OutputStream.Dispose() }
+        if ($InputStream) { $InputStream.Dispose() }
+    }
+    (Get-Item -LiteralPath $Target).LastWriteTimeUtc = (Get-Item -LiteralPath $Source).LastWriteTimeUtc
 }
 
 function Get-ShortHash([string]$Text) {
@@ -64,6 +99,11 @@ catch { exit 0 }
 try {
     Write-Result 'Running' 'Выполняется поиск PST.'
     Write-Log "Начало. Пользователь: $env:USERDOMAIN\$env:USERNAME"
+
+    # Новый Outlook не поддерживает COM. Требуется установленный классический Outlook.
+    if (-not [type]::GetTypeFromProgID('Outlook.Application')) {
+        throw 'Классический Outlook не установлен. Новый Outlook не поддерживает подключение PST через COM.'
+    }
 
     # Сначала получаем все PST, подключённые к Outlook. Они могут лежать на любом диске.
     $Outlook = New-Object -ComObject Outlook.Application
@@ -107,6 +147,19 @@ try {
         }
     }
 
+    # Проверяем объём данных и свободное место до начала копирования.
+    $BytesToCopy = [long](($Plan | Where-Object { -not (Test-Path -LiteralPath $_.NewPath) } |
+        ForEach-Object { (Get-Item -LiteralPath $_.OldPath).Length } | Measure-Object -Sum).Sum)
+    $DestinationDrive = New-Object IO.DriveInfo([IO.Path]::GetPathRoot([IO.Path]::GetFullPath($Destination)))
+    $ReserveBytes = 512MB
+    if ($DestinationDrive.AvailableFreeSpace -lt ($BytesToCopy + $ReserveBytes)) {
+        $NeedGb = [math]::Ceiling(($BytesToCopy + $ReserveBytes) / 1GB)
+        $FreeGb = [math]::Round($DestinationDrive.AvailableFreeSpace / 1GB, 2)
+        throw "Недостаточно места. Требуется около $NeedGb ГБ, свободно $FreeGb ГБ."
+    }
+    Write-Log "К копированию: $([math]::Round($BytesToCopy / 1GB, 2)) ГБ; свободно: $([math]::Round($DestinationDrive.AvailableFreeSpace / 1GB, 2)) ГБ."
+    $CopiedBytes = [long]0
+
     # Сначала копируем и проверяем абсолютно все файлы. При ошибке будет выполнен откат.
     foreach ($Item in $Plan) {
         if (Test-Path -LiteralPath $Item.NewPath) {
@@ -119,7 +172,7 @@ try {
 
         $Temp = "$($Item.NewPath).partial"
         [void]$TempFiles.Add($Temp)
-        Copy-Item -LiteralPath $Item.OldPath -Destination $Temp -Force
+        Copy-PstFile -Source $Item.OldPath -Target $Temp -TotalBytes $BytesToCopy -OverallBytes ([ref]$CopiedBytes)
         if ((Get-FileHash -LiteralPath $Item.OldPath).Hash -ne (Get-FileHash -LiteralPath $Temp).Hash) {
             Remove-Item -LiteralPath $Temp -Force -ErrorAction SilentlyContinue
             throw "Контрольная сумма не совпала: $($Item.OldPath)"
