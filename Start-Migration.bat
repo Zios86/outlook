@@ -18,19 +18,33 @@ rem Для массового запуска средство управлени
 fltmc >nul 2>&1
 if errorlevel 1 (
     echo ОШИБКА: запустите файл от имени администратора или SYSTEM.
-    if "%SILENT%"=="0" pause
-    exit /b 1
+    set "RESULT=1"
+    goto :finish
 )
 
 rem Копируем скрипты в постоянную рабочую папку.
 set "WORKDIR=%ProgramData%\OutlookPstMigration"
 if not exist "%WORKDIR%" mkdir "%WORKDIR%"
-if errorlevel 1 exit /b 2
+if errorlevel 1 (
+    echo ОШИБКА: не удалось создать "%WORKDIR%".
+    set "RESULT=2"
+    goto :finish
+)
 
 copy /y "%~dp01-SystemStage.ps1" "%WORKDIR%\1-SystemStage.ps1" >nul
-if errorlevel 1 exit /b 3
+if errorlevel 1 (
+    echo ОШИБКА: рядом с BAT не найден файл 1-SystemStage.ps1.
+    echo Сначала полностью распакуйте ZIP-архив.
+    set "RESULT=3"
+    goto :finish
+)
 copy /y "%~dp02-UserStage.ps1" "%WORKDIR%\2-UserStage.ps1" >nul
-if errorlevel 1 exit /b 4
+if errorlevel 1 (
+    echo ОШИБКА: рядом с BAT не найден файл 2-UserStage.ps1.
+    echo Сначала полностью распакуйте ZIP-архив.
+    set "RESULT=4"
+    goto :finish
+)
 
 echo.
 echo Выполняется поиск PST-архивов пользователя...
@@ -51,12 +65,16 @@ if not "%RESULT%"=="0" (
 ) else (
     findstr /c:"PST_RESULT_COUNT=0" "%OUTPUT%" >nul
     if errorlevel 1 (
-        echo ГОТОВО: PST-архивы найдены и успешно перенесены в "%DESTINATION%".
+        echo ГОТОВО: PST-архивы скопированы в "%DESTINATION%".
+        echo Исходные PST-файлы сохранены и автоматически не удалялись.
     ) else (
         echo ГОТОВО: PST-архивы пользователя не найдены. Перенос не требуется.
     )
 )
 
 del /q "%OUTPUT%" >nul 2>&1
+
+:finish
+if not defined RESULT set "RESULT=1"
 if "%SILENT%"=="0" pause
 exit /b %RESULT%
